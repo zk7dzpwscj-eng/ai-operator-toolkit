@@ -57,37 +57,20 @@ function toMarkdown(data) {
 function StepIndicator({ current }) {
   var steps = ["Describe", "Refine", "Plan"];
   return (
-    <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "32px" }}>
+    <div className="step-indicator">
       {steps.map(function(label, i) {
         var isActive = i === current;
         var isDone = i < current;
+        var dotClass = "step-dot " + (isActive ? "active" : isDone ? "done" : "upcoming");
+        var labelClass = "step-label " + (isActive ? "active" : "inactive");
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{
-              width: "28px",
-              height: "28px",
-              borderRadius: "50%",
-              background: isActive ? "#4f46e5" : isDone ? "#22c55e" : "#e5e7eb",
-              color: isActive || isDone ? "#fff" : "#999",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "0.8rem",
-              fontWeight: "600"
-            }}>
+          <div key={i} style={{ display: "flex", alignItems: "center" }}>
+            <div className={dotClass}>
               {isDone ? "\u2713" : i + 1}
             </div>
-            <span style={{
-              fontSize: "0.85rem",
-              fontWeight: isActive ? "600" : "400",
-              color: isActive ? "#1a1a2e" : "#999"
-            }}>{label}</span>
+            <span className={labelClass}>{label}</span>
             {i < 2 && (
-              <div style={{
-                width: "32px",
-                height: "2px",
-                background: isDone ? "#22c55e" : "#e5e7eb"
-              }} />
+              <div className={"step-line " + (isDone ? "done" : "upcoming")} />
             )}
           </div>
         );
@@ -98,7 +81,7 @@ function StepIndicator({ current }) {
 
 function Results({ data }) {
   return (
-    <div className="results">
+    <div className="results fade-in">
       <div className="results-section">
         <h2>Summary</h2>
         <div className="summary-box">
@@ -372,139 +355,128 @@ export default function Home() {
   }
 
   return (
-    <div className="container">
-      <div className="header">
-        <h1>AI Native Operator Toolkit</h1>
-        <p>
-          Describe your business situation. Get an actionable AI-native operator
-          plan in seconds.
-        </p>
-      </div>
-
-      <StepIndicator current={step} />
-
-      {/* STEP 0: Describe situation */}
-      {step === 0 && (
-        <>
-          <div className="input-area">
-            <textarea
-              placeholder="Example: I run a 5-person e-commerce brand. We spend 10+ hours/week manually updating inventory across Shopify, Amazon, and our warehouse spreadsheet. Our customer support is handled via a shared Gmail inbox and we often miss messages..."
-              value={situation}
-              onChange={function(e) { setSituation(e.target.value); }}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="button-row">
-            <button className="btn" onClick={handleNext} disabled={loading}>
-              {loading ? "Analyzing..." : "Next \u2192"}
-            </button>
-          </div>
-        </>
-      )}
-
-      {/* STEP 1: Answer scoping questions */}
-      {step === 1 && questions && (
-        <>
-          <div className="results-section" style={{ marginBottom: "20px" }}>
-            <p style={{ fontSize: "0.88rem", color: "#555", marginBottom: "4px" }}>
-              <strong>Your situation:</strong> {situation.length > 150 ? situation.slice(0, 150) + "..." : situation}
-            </p>
-          </div>
-
-          <div className="results-section">
-            <h2>A few quick questions to sharpen your plan</h2>
-            {questions.map(function(q) {
-              return (
-                <div key={q.id} style={{ marginBottom: "24px" }}>
-                  <p style={{ fontWeight: "600", marginBottom: "10px" }}>{q.question}</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
-                    {q.options.map(function(opt, j) {
-                      var isSelected = answers[q.id] === opt;
-                      return (
-                        <button
-                          key={j}
-                          onClick={function() { setAnswer(q.id, isSelected ? "" : opt); }}
-                          style={{
-                            padding: "8px 16px",
-                            borderRadius: "20px",
-                            border: isSelected ? "2px solid #4f46e5" : "2px solid #e5e7eb",
-                            background: isSelected ? "#eef2ff" : "#fff",
-                            color: isSelected ? "#4f46e5" : "#374151",
-                            fontSize: "0.88rem",
-                            fontWeight: isSelected ? "600" : "400",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {opt}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {q.allow_freetext && (
-                    <input
-                      type="text"
-                      placeholder="Or type your own answer..."
-                      value={answers[q.id + "_freetext"] || ""}
-                      onChange={function(e) { setAnswer(q.id + "_freetext", e.target.value); }}
-                      style={{
-                        width: "100%",
-                        padding: "10px 14px",
-                        border: "2px solid #e5e7eb",
-                        borderRadius: "8px",
-                        fontSize: "0.88rem",
-                        fontFamily: "inherit",
-                        marginTop: "4px",
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="button-row" style={{ marginTop: "16px" }}>
-            <button
-              className="btn"
-              onClick={function() { setStep(0); setError(""); }}
-              style={{ background: "#6b7280" }}
-            >
-              {"\u2190 Back"}
-            </button>
-            <button className="btn" onClick={handleGenerate} disabled={loading}>
-              {loading ? "Generating..." : "Generate Plan \u2192"}
-            </button>
-          </div>
-        </>
-      )}
-
-      {/* STEP 2: Results */}
-      {step === 2 && results && (
-        <>
-          <div className="button-row" style={{ marginBottom: "16px" }}>
-            <button className="btn" onClick={handleStartOver}>
-              {"\u2190 Start Over"}
-            </button>
-            <button className="btn btn-secondary" onClick={handleCopy}>
-              {copied ? "\u2713 Copied!" : "Copy as Markdown"}
-            </button>
-            {copied && <span className="copied-toast">Copied to clipboard</span>}
-          </div>
-          <Results data={results} />
-        </>
-      )}
-
-      {error && <div className="error-box" style={{ marginTop: 16 }}>{error}</div>}
-
-      {loading && (
-        <div className="loading-box">
-          <div className="spinner" />
-          <p>{step === 0 ? "Analyzing your situation..." : "Generating your personalized plan..."}</p>
-          <p style={{ fontSize: "0.82rem", color: "#888", marginTop: 4 }}>
-            {step === 0 ? "This takes about 5-10 seconds." : "This takes about 15-30 seconds."}
+    <div className="page-wrapper">
+      <div className="hero">
+        <div className="hero-inner">
+          <div className="hero-badge">AI-Powered Operations Strategy</div>
+          <h1>AI Native Operator Toolkit</h1>
+          <p>
+            Describe your business situation. Get a tailored automation and AI
+            strategy you can act on this week.
           </p>
         </div>
-      )}
+      </div>
+
+      <div className="container">
+        <StepIndicator current={step} />
+
+        {/* STEP 0: Describe */}
+        {step === 0 && !loading && (
+          <div className="fade-in">
+            <div className="input-area">
+              <textarea
+                placeholder="Example: I run a 5-person e-commerce brand. We spend 10+ hours/week manually updating inventory across Shopify, Amazon, and our warehouse spreadsheet. Our customer support is handled via a shared Gmail inbox and we often miss messages..."
+                value={situation}
+                onChange={function(e) { setSituation(e.target.value); }}
+                disabled={loading}
+              />
+            </div>
+            <div className="button-row">
+              <button className="btn" onClick={handleNext} disabled={loading}>
+                Next &rarr;
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 1: Scoping questions */}
+        {step === 1 && questions && !loading && (
+          <div className="fade-in">
+            <div className="situation-preview">
+              <strong>Your situation:</strong>{" "}
+              {situation.length > 150 ? situation.slice(0, 150) + "..." : situation}
+            </div>
+
+            <div className="results-section">
+              <h2>A few quick questions to sharpen your plan</h2>
+              {questions.map(function(q) {
+                return (
+                  <div className="question-block" key={q.id}>
+                    <p className="question-text">{q.question}</p>
+                    <div className="options-row">
+                      {q.options.map(function(opt, j) {
+                        var isSelected = answers[q.id] === opt;
+                        return (
+                          <button
+                            key={j}
+                            className={"option-btn" + (isSelected ? " selected" : "")}
+                            onClick={function() { setAnswer(q.id, isSelected ? "" : opt); }}
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {q.allow_freetext && (
+                      <input
+                        type="text"
+                        className="freetext-input"
+                        placeholder="Or type your own answer..."
+                        value={answers[q.id + "_freetext"] || ""}
+                        onChange={function(e) { setAnswer(q.id + "_freetext", e.target.value); }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="button-row" style={{ marginTop: "16px" }}>
+              <button
+                className="btn btn-back"
+                onClick={function() { setStep(0); setError(""); }}
+              >
+                &larr; Back
+              </button>
+              <button className="btn" onClick={handleGenerate} disabled={loading}>
+                Generate Plan &rarr;
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: Results */}
+        {step === 2 && results && !loading && (
+          <div className="fade-in">
+            <div className="button-row" style={{ marginBottom: "16px" }}>
+              <button className="btn btn-back" onClick={handleStartOver}>
+                &larr; Start Over
+              </button>
+              <button className="btn btn-secondary" onClick={handleCopy}>
+                {copied ? "\u2713 Copied!" : "Copy as Markdown"}
+              </button>
+              {copied && <span className="copied-toast">Copied to clipboard</span>}
+            </div>
+            <Results data={results} />
+          </div>
+        )}
+
+        {error && <div className="error-box">{error}</div>}
+
+        {loading && (
+          <div className="loading-box fade-in">
+            <div className="spinner" />
+            <p>{step === 0 ? "Analyzing your situation..." : "Generating your personalized plan..."}</p>
+            <p className="loading-sub">
+              {step === 0 ? "This takes about 5\u201310 seconds." : "This takes about 15\u201330 seconds."}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="footer">
+        Built with Claude &middot; AI Native Operator Toolkit v0.2
+      </div>
     </div>
   );
 }
