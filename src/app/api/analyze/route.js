@@ -2,13 +2,14 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const SYSTEM_PROMPT = `You are an AI-native operator and startup ops strategist. You help business operators find automation opportunities, AI leverage plays, and concrete build plans.
 
-Your job: given a user's business situation, produce a structured JSON plan they can act on THIS WEEK.
+Your job: given a user's business situation and their answers to scoping questions, produce a structured JSON plan they can act on THIS WEEK.
 
 Rules:
 - Output ONLY valid JSON. No markdown. No commentary. No backticks. No surrounding text.
 - Follow the exact schema below with no extra or missing fields.
 - Be practical, specific, and concrete. Avoid generic advice.
-- If something is unclear, make an explicit assumption and list it.
+- Use the scoping answers to make your recommendations highly specific and tailored.
+- If something is still unclear, make an explicit assumption and list it.
 - Do NOT ask the user questions inside the output. Put unknowns into the "assumptions" array.
 - Suggest real tools (n8n, Zapier, Make, Claude, GPT, Notion, Airtable, etc.) but stay tool-agnostic in strategy.
 - Keep automation_opportunities to 3-5 items.
@@ -67,29 +68,38 @@ Output ONLY the JSON object. Nothing else.`;
 
 const client = new Anthropic();
 
-async function callClaude(situation, isRetry = false) {
-  const userMessage = isRetry
-    ? "Your previous response was not valid JSON. Please try again. Output ONLY a valid JSON object with no other text.\n\nBusiness situation:\n" + situation
-    : "Business situation:\n" + situation;
+async function callClaude(situation, answers, isRetry) {
+  var userContent = "Business situation:\n" + situation;
 
-  const response = await client.messages.create({
+  if (answers && answers.length > 0) {
+    userContent += "\n\nScoping answers:";
+    answers.forEach(function(a) {
+      userContent += "\nQ: " + a.question + "\nA: " + a.answer;
+    });
+  }
+
+  if (isRetry) {
+    userContent = "Your previous response was not valid JSON. Please try again. Output ONLY a valid JSON object with no other text.\n\n" + userContent;
+  }
+
+  var response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 4096,
     temperature: 0.2,
     system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: userMessage }],
+    messages: [{ role: "user", content: userContent }],
   });
 
-  const text = response.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
+  var text = response.content
+    .filter(function(block) { return block.type === "text"; })
+    .map(function(block) { return block.text; })
     .join("");
 
   return text;
 }
 
 function parseJSON(text) {
-  let cleaned = text.trim();
+  var cleaned = text.trim();
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
   }
@@ -109,8 +119,9 @@ function validateSchema(data) {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const situation = body.situation;
+    var body = await request.json();
+    var situation = body.situation;
+    var answers = body.answers || [];
 
     if (!situation || typeof situation !== "string") {
       return Response.json(
@@ -140,15 +151,15 @@ export async function POST(request) {
       );
     }
 
-    let text = await callClaude(situation, false);
-    let parsed;
+    var text = await callClaude(situation, answers, false);
+    var parsed;
 
     try {
       parsed = parseJSON(text);
       if (!validateSchema(parsed)) throw new Error("Schema validation failed");
     } catch {
       console.log("First attempt failed to parse. Retrying...");
-      text = await callClaude(situation, true);
+      text = await callClaude(situation, answers, true);
       try {
         parsed = parseJSON(text);
         if (!validateSchema(parsed))
