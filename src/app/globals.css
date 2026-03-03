@@ -385,6 +385,121 @@ body {
   font-weight: 500;
 }
 
+/* ROI Indicators */
+.roi-strip {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0 6px;
+  flex-wrap: wrap;
+}
+
+.roi-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.roi-icon {
+  font-size: 0.9rem;
+}
+
+.roi-bar-container {
+  width: 48px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.roi-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.roi-bar.high {
+  width: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.roi-bar.medium {
+  width: 60%;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.roi-bar.low {
+  width: 30%;
+  background: linear-gradient(90deg, #9ca3af, #6b7280);
+}
+
+.roi-label {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.roi-label.high {
+  color: #16a34a;
+}
+
+.roi-label.medium {
+  color: #d97706;
+}
+
+.roi-label.low {
+  color: #6b7280;
+}
+
+.time-saved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-right: 6px;
+  margin-bottom: 4px;
+}
+
+.roi-summary-card {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.roi-summary-stat {
+  text-align: center;
+}
+
+.roi-summary-stat .number {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #065f46;
+}
+
+.roi-summary-stat .label {
+  font-size: 0.72rem;
+  color: #047857;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.roi-summary-arrow {
+  font-size: 1.2rem;
+  color: #059669;
+}
+
 /* Questions */
 .situation-preview {
   background: #f9fafb;
@@ -499,4 +614,6 @@ body {
   .container { padding: 0 16px 60px; }
   .results-section { padding: 20px; }
   .step-label { display: none; }
+  .roi-strip { gap: 8px; }
+  .roi-summary-card { flex-direction: column; text-align: center; }
 }

@@ -16,6 +16,8 @@ Rules:
 - Keep ai_leverage_plays to 3-5 items.
 - Keep skills_required to 2-4 items.
 - build_this_week should be ONE concrete project doable in under 20 hours.
+- Be specific and realistic with time_saved_weekly estimates. Use ranges like "2-4 hrs/week".
+- roi_score should reflect the ratio of value gained vs effort to implement.
 
 Required JSON schema:
 {
@@ -31,7 +33,10 @@ Required JSON schema:
       "inputs": ["string array"],
       "steps": ["string array - the workflow steps"],
       "tools": ["string array - suggested tools"],
-      "estimated_effort": "S or M or L"
+      "estimated_effort": "S or M or L",
+      "time_saved_weekly": "string - realistic estimate like '2-4 hrs/week' or '30 min/day'",
+      "implementation_complexity": "low or medium or high",
+      "roi_score": "high or medium or low"
     }
   ],
   "ai_leverage_plays": [
@@ -40,7 +45,9 @@ Required JSON schema:
       "use_case": "string",
       "how_it_works": "string",
       "tools": ["string array"],
-      "risk_or_limit": "string"
+      "risk_or_limit": "string",
+      "impact_level": "high or medium or low",
+      "time_saved_weekly": "string - realistic estimate"
     }
   ],
   "build_this_week": {
@@ -50,7 +57,8 @@ Required JSON schema:
     "build_steps": ["string array"],
     "success_criteria": ["string array"],
     "timebox_hours": 0,
-    "stretch": ["string array"]
+    "stretch": ["string array"],
+    "estimated_weekly_roi": "string - hours saved per week once built, e.g. '3-5 hrs/week'"
   },
   "skills_required": [
     {

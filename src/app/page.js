@@ -15,7 +15,10 @@ function toMarkdown(data) {
     md += "**Steps:**\n";
     item.steps.forEach(function(s) { md += "- " + s + "\n"; });
     md += "**Tools:** " + item.tools.join(", ") + "\n";
-    md += "**Effort:** " + item.estimated_effort + "\n\n";
+    md += "**Effort:** " + item.estimated_effort + "\n";
+    if (item.time_saved_weekly) md += "**Time saved:** " + item.time_saved_weekly + "\n";
+    if (item.roi_score) md += "**ROI:** " + item.roi_score + "\n";
+    md += "\n";
   });
   md += "## AI Leverage Plays\n\n";
   data.ai_leverage_plays.forEach(function(item, i) {
@@ -23,11 +26,15 @@ function toMarkdown(data) {
     md += "**Use case:** " + item.use_case + "\n";
     md += "**How it works:** " + item.how_it_works + "\n";
     md += "**Tools:** " + item.tools.join(", ") + "\n";
-    md += "**Risk / limit:** " + item.risk_or_limit + "\n\n";
+    md += "**Risk / limit:** " + item.risk_or_limit + "\n";
+    if (item.impact_level) md += "**Impact:** " + item.impact_level + "\n";
+    if (item.time_saved_weekly) md += "**Time saved:** " + item.time_saved_weekly + "\n";
+    md += "\n";
   });
   md += "## Build This Week: " + data.build_this_week.project_name + "\n\n";
   md += "**Goal:** " + data.build_this_week.goal + "\n";
   md += "**Timebox:** " + data.build_this_week.timebox_hours + " hours\n";
+  if (data.build_this_week.estimated_weekly_roi) md += "**Estimated weekly ROI:** " + data.build_this_week.estimated_weekly_roi + "\n";
   md += "**MVP scope:**\n";
   data.build_this_week.mvp_scope.forEach(function(s) { md += "- " + s + "\n"; });
   md += "**Build steps:**\n";
@@ -52,6 +59,30 @@ function toMarkdown(data) {
     data.next_questions.forEach(function(q) { md += "- " + q + "\n"; });
   }
   return md;
+}
+
+function RoiIndicator({ label, level }) {
+  if (!level) return null;
+  var normalized = (level || "").toLowerCase();
+  return (
+    <div className="roi-item">
+      <span className="roi-icon">{label === "ROI" ? "\u{1F4C8}" : label === "Impact" ? "\u26A1" : "\u2699\uFE0F"}</span>
+      <span style={{ fontSize: "0.78rem", color: "#555" }}>{label}:</span>
+      <div className="roi-bar-container">
+        <div className={"roi-bar " + normalized} />
+      </div>
+      <span className={"roi-label " + normalized}>{normalized}</span>
+    </div>
+  );
+}
+
+function TimeSavedBadge({ time }) {
+  if (!time) return null;
+  return (
+    <span className="time-saved-badge">
+      {"\u23F1"} {time}
+    </span>
+  );
 }
 
 function StepIndicator({ current }) {
@@ -102,7 +133,12 @@ function Results({ data }) {
               <h3>
                 {item.title}{" "}
                 <span className="badge badge-effort">{item.estimated_effort}</span>
+                <TimeSavedBadge time={item.time_saved_weekly} />
               </h3>
+              <div className="roi-strip">
+                <RoiIndicator label="ROI" level={item.roi_score} />
+                <RoiIndicator label="Complexity" level={item.implementation_complexity} />
+              </div>
               <p><strong>Why it matters:</strong> {item.why_it_matters}</p>
               <p><strong>Trigger:</strong> {item.trigger}</p>
               <p><strong>Inputs:</strong> {item.inputs.join(", ")}</p>
@@ -127,7 +163,15 @@ function Results({ data }) {
         {data.ai_leverage_plays.map(function(item, i) {
           return (
             <div className="card" key={i}>
-              <h3>{item.title}</h3>
+              <h3>
+                {item.title}
+                {item.time_saved_weekly && (
+                  <>{" "}<TimeSavedBadge time={item.time_saved_weekly} /></>
+                )}
+              </h3>
+              <div className="roi-strip">
+                <RoiIndicator label="Impact" level={item.impact_level} />
+              </div>
               <p><strong>Use case:</strong> {item.use_case}</p>
               <p><strong>How it works:</strong> {item.how_it_works}</p>
               <p><strong>Risk / limit:</strong> {item.risk_or_limit}</p>
@@ -145,6 +189,19 @@ function Results({ data }) {
         <h2>Build This Week: {data.build_this_week.project_name}</h2>
         <p><strong>Goal:</strong> {data.build_this_week.goal}</p>
         <p><strong>Timebox:</strong> {data.build_this_week.timebox_hours} hours</p>
+        {data.build_this_week.estimated_weekly_roi && (
+          <div className="roi-summary-card">
+            <div className="roi-summary-stat">
+              <div className="number">{data.build_this_week.timebox_hours}h</div>
+              <div className="label">To Build</div>
+            </div>
+            <div className="roi-summary-arrow">&rarr;</div>
+            <div className="roi-summary-stat">
+              <div className="number">{data.build_this_week.estimated_weekly_roi}</div>
+              <div className="label">Saved Weekly</div>
+            </div>
+          </div>
+        )}
         <h3>MVP Scope</h3>
         <ul>
           {data.build_this_week.mvp_scope.map(function(s, i) {
@@ -370,7 +427,6 @@ export default function Home() {
       <div className="container">
         <StepIndicator current={step} />
 
-        {/* STEP 0: Describe */}
         {step === 0 && !loading && (
           <div className="fade-in">
             <div className="input-area">
@@ -389,7 +445,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* STEP 1: Scoping questions */}
         {step === 1 && questions && !loading && (
           <div className="fade-in">
             <div className="situation-preview">
@@ -445,7 +500,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* STEP 2: Results */}
         {step === 2 && results && !loading && (
           <div className="fade-in">
             <div className="button-row" style={{ marginBottom: "16px" }}>
@@ -475,7 +529,7 @@ export default function Home() {
       </div>
 
       <div className="footer">
-        Built with Claude &middot; AI Native Operator Toolkit v0.2
+        Built with Claude &middot; AI Native Operator Toolkit v0.3
       </div>
     </div>
   );
